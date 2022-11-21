@@ -1,0 +1,1843 @@
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+#include <AccelStepper.h>
+#include <Servo.h>
+#define LOCK D0
+#define DOORBELL 2
+Servo myservo;  // create servo object to control a servo
+
+int pos = 0;  // variable to store the servo position
+
+const char* ssid = "MERCUSYS_21B8";  
+const char* password =  "12345678";
+
+unsigned long previousMillis = 0;  
+unsigned long interval = 3000;
+String message;
+String String_cmd = "";
+String city = "";
+int i=0;
+int c=0;
+int val;
+int Step1;
+int Step2;
+//Enter your mqtt server configurations
+const char* mqttServer = "192.168.1.101";    //Enter Your mqttServer address
+const int mqttPort = 2222;       //Port number
+
+int arrayind1;
+int arrayind2 ;
+int neardiff1;
+int neardiff2;
+int count=0;
+
+WiFiClient LOCK2;
+PubSubClient client (LOCK2);
+
+
+// MUMBAI I1
+      int I1mumbai_current_position = 0;
+      int I1mumbai_current2_position = 0;
+   
+     static int I1mumbai_total_positions = 4;
+     static int I1mumbai_total2_positions = 4;
+    
+       static int I1mumbai_positions_to_go[4] =  {658, 658, 0, 0};
+       static int I1mumbai_positions2_to_go[4] = {658, 658, 0, 0};
+//      MUMBAI I2
+        int I2mumbai_current_position = 0;
+       int I2mumbai_current2_position = 0;
+   
+      static int I2mumbai_total_positions = 12;
+     static int I2mumbai_total2_positions = 12;
+
+      static int I2mumbai_positions_to_go[12] =  {306, 306, 203, 203, 950, 950, 1053, 1053, 1359, 1359, 747, 747};
+       static int I2mumbai_positions2_to_go[12] = {306, 306, 409, 409, 1156, 1156, 1053, 1053, 1359, 1359, 747, 747};
+       
+// DELHI I1
+
+       int I1delhi_current_position = 0;
+       int I1delhi_current2_position = 0;
+   
+     static int I1delhi_total_positions = 20;
+     static int I1delhi_total2_positions = 20;
+
+    static int I1delhi_positions_to_go[20] = {918, 918, 815, 815, 1117, 1117, 1277, 1277, 1171, 1171, 1783, 1783, 1680, 1680, 2139, 2139, 2033, 2033, 1727, 1727};
+    static int I1delhi_positions2_to_go[20] = {918, 918, 1021, 1021, 1323, 1323, 1483, 1483, 1589, 1589, 2201, 2201, 2304, 2304, 2763,  2763, 2869, 2869, 2563, 2563};
+// DELHI I2
+      int I2delhi_current_position = 0;    // yet to be revised array
+      int I2delhi_current2_position = 0;
+   
+      static int I2delhi_total_positions = 18;
+      static int I2delhi_total2_positions = 18;
+
+   static int I2delhi_positions_to_go[18] = {1407, 1407, 1303, 1303, 2527, 2527, 2421, 2421, 4434, 4434, 4331, 4331, 4790, 4790, 4687,4687, 4381, 4381}; 
+   static int I2delhi_positions2_to_go[18]= {1407, 1407, 1511, 1511, 2735, 2735, 2841, 2841, 4854, 4854, 4957, 4957, 5416, 5416, 5519,5519, 5213, 5213};
+
+//      KOLKATA I1
+      int I1kolkata_current_position = 0;
+      int I1kolkata_current2_position = 0;
+   
+      static int I1kolkata_total_positions = 18;
+      static int I1kolkata_total2_positions = 18;
+
+    
+      static int I1kolkata_positions_to_go[18] =  {1522, 1522, 1418, 1418, 1903, 1903, 1796, 1796, 3022, 3022, 2918, 2918, 3388, 3388, 3285, 3285, 2979, 2979};
+      static int I1kolkata_positions2_to_go[18] = {1522, 1522, 1626, 1626, 2111, 2111, 2218, 2218, 3444, 3444, 3548, 3548, 4018, 4018, 4121, 4121, 3815, 3815};
+
+
+//    KOLKATA I2
+      int I2kolkata_current_position = 0;
+      int I2kolkata_current2_position = 0;
+   
+     static int I2kolkata_total_positions = 18;
+     static int I2kolkata_total2_positions = 18;
+
+    
+    static int I2kolkata_positions_to_go[18] =  {1992, 1992, 1889, 1889, 3122, 3122, 3020, 3020, 4703, 4703, 4600, 4600, 5087, 5087, 4984, 4984, 4678, 4678};
+    static int I2kolkata_positions2_to_go[18] = {1992, 1992, 2095, 2095, 3328, 3328, 3430, 3430, 5113, 5113, 5216, 5216, 5703, 5703, 5806, 5806, 5500, 5500};
+    
+//    CHENNAI I1
+      int I1chennai_current_position = 0;
+      int I1chennai_current2_position = 0;
+   
+     static int I1chennai_total_positions = 22;
+     static int I1chennai_total2_positions = 22;
+
+     static int I1chennai_positions_to_go[22] =  {198, 198, 301, 301, 454, 454, 351, 351, 504, 504, 810, 810, 351, 351, 454, 454, 301, 301, 198, 198, 45, 45};
+     static int I1chennai_positions2_to_go[22] = {198, 198, 95, 95, 248, 248, 351, 351, 504, 504, 810, 810, 351, 351, 248, 248, 95, 95, 198, 198, 45, 45};
+
+     
+//      CHENNAI I2
+      int I2chennai_current_position = 0;
+      int I2chennai_current2_position = 0;
+   
+     static int I2chennai_total_positions = 14;
+     static int I2chennai_total2_positions =14;
+      
+    static int I2chennai_positions_to_go[14] =  {342, 342, 239, 239, 698, 698, 239, 239, 342, 342, 36, 36, 36, 36};
+    static int I2chennai_positions2_to_go[14] = {342, 342, 445, 445, 904, 904, 445, 445, 342, 342, 36, 36, 36, 36};
+
+//      BANGLORE I1
+      int I1banglore_current_position = 0;
+      int I1banglore_current2_position = 0;
+   
+     static int I1banglore_total_positions = 18;
+     static int I1banglore_total2_positions = 18;
+      
+     static int I1banglore_positions_to_go[18] = {918, 918, 1023, 1023, 1635, 1635, 1738, 1738, 2350, 2350, 2246, 2246, 2399, 2399, 2296, 2296, 1990, 1990};
+     static int I1banglore_positions2_to_go[18] = {918, 918, 813, 813, 1425, 1425, 1322, 1322, 1934, 1934, 2038, 2038, 2191, 2191, 2294, 2294, 1988, 1988};
+//      BANGLORE I2
+      int I2banglore_current_position = 0;
+      int I2banglore_current2_position = 0;
+   
+     static int I2banglore_total_positions = 18;
+     static int I2banglore_total2_positions = 18;
+
+    static int I2banglore_positions_to_go[18] = {1392, 392, 1288, 1288, 1900, 1900, 1795, 1795, 2866, 2866, 2968, 2968, 3123, 3123, 3226, 3226, 2920, 2920} ;    
+    static int I2banglore_positions2_to_go[18] ={1392, 1392, 1496, 1496, 2108, 2108, 2118, 2118, 3189, 3189, 3087, 3087, 3242, 3242, 3139,3139, 2833, 2833};
+
+//      HYDERABAD I1
+      int I1hydrabad_current_position = 0;
+      int I1hydrabad_current2_position = 0;
+   
+     static int I1hydrabad_total_positions = 18;
+     static int I1hydrabad_total2_positions = 18;
+
+      static int I1hydrabad_positions_to_go[18] = {1470, 1470, 1572, 1572, 2802, 2802, 2903, 2903, 4011, 4011, 4114, 4114, 4581, 4581, 4684,4684, 4378, 4378}; 
+      static int I1hydrabad_positions2_to_go[18] ={1470, 1470, 1368, 1368, 2598, 2598, 2497, 2497, 3605, 3605, 3502, 3502, 3969, 3969, 3866,3866, 3560, 3560};
+      
+        //static int I1hydrabad_positions_to_go[18] = {1530, 1530, 1633, 1633, 2860, 2860, 2963, 2963, 4187, 4187, 4290, 4290, 4743, 4743, 4846, 4846, 4540, 4540};    
+      //static int I1hydrabad_positions2_to_go[18] ={1530, 1530, 1427, 1427, 2654, 2654, 2551, 2551, 3775, 3775, 3672, 3672, 4125, 4125, 4022, 4022, 3716, 3716};
+//      HYDERABAD I2
+      int I2hydrabad_current_position = 0;
+      int I2hydrabad_current2_position = 0;
+
+
+   
+     static int I2hydrabad_total_positions = 18;
+     static int I2hydrabad_total2_positions = 18;
+
+       static int I2hydrabad_positions_to_go[18] = {1470, 1470, 1572, 1572, 2802, 2802, 2903, 2903, 4001, 4001, 4104, 4104, 4571, 4571, 4674, 4674, 4368, 4368};
+      static int I2hydrabad_positions2_to_go[18] = {1470, 1470, 1368, 1368, 2598, 2598, 2497, 2497, 3595, 3595, 3492, 3492, 3959, 3959, 3856,3856, 3550, 3550};
+//      PUNE I1
+      int I1pune_current_position = 0;
+      int I1pune_current2_position = 0;
+   
+      static int I1pune_total_positions = 14;
+      static int I1pune_total2_positions = 14;
+
+      static int I1pune_positions_to_go[14] = {306, 306, 409, 409, 1174, 1174, 1067, 1067, 1139, 1139, 1373, 1373, 761, 761};
+      static int I1pune_positions2_to_go[14] = {306, 306, 203, 203, 968, 968, 1074, 1074, 1146, 1146, 1381, 1381, 769, 769};
+//      PUNE I2
+      int I2pune_current_position = 0;
+      int I2pune_current2_position = 0;
+   
+      static int I2pune_total_positions = 4;
+      static int I2pune_total2_positions = 4; 
+      
+ static int I2pune_positions_to_go[4] =  {612, 612, 0, 0};
+ static int I2pune_positions2_to_go[4] = {612, 612, 0, 0};
+
+ //      BIHAR I1
+      int I1abad_current_position = 0;
+      int I1abad_current2_position = 0;
+   
+      static int I1abad_total_positions = 18;
+      static int I1abad_total2_positions = 18; 
+      
+ static int I1abad_positions_to_go[18] =  {1444, 1444, 1545, 1545, 2769, 2769, 2872, 2872, 3949, 3949, 4050, 4050, 4517, 4517, 4620,4620, 4314, 4314};
+ static int I1abad_positions2_to_go[18] = {1444, 1444, 1343, 1343, 2567, 2567, 2464, 2464, 3541, 3541, 3440, 3440, 3907, 3907, 3804,3804, 3498, 3498};
+  
+ //static int I1abad_positions_to_go[18] =  {1381, 1381, 1484, 1484, 2710, 2710, 2815, 2815, 3886, 3886, 3991, 3991, 4451, 4451, 4554, 4554, 4248, 4248};
+ //static int I1abad_positions2_to_go[18] = {1381, 1381, 1278, 1278, 2504, 2504, 2399, 2399, 3470, 3470, 3365, 3365, 3825, 3825, 3722, 3722, 3416, 3416};
+
+ //      BIHAR I2
+      int I2abad_current_position = 0;
+      int I2abad_current2_position = 0;
+   
+      static int I2abad_total_positions = 18;
+      static int I2abad_total2_positions = 18; 
+      
+ static int I2abad_positions_to_go[18] =  {918, 918, 1021, 1021, 1493, 1493, 1596, 1596, 2208, 2208, 2310, 2310, 2807, 2807, 2915, 2915, 2609, 2609};
+ static int I2abad_positions2_to_go[18] = {918, 918, 815, 815, 1287, 1287, 1184, 1184, 1796, 1796, 1694, 1694, 2191, 2191, 2083, 2083,  1777, 1777};
+
+ // static int I2abad_positions_to_go[18] =  {918, 918, 1021, 1021, 1482, 1482, 1585, 1585, 2197, 2197, 2299, 2299, 2799, 2799, 2907, 2907, 2601, 2601};
+ //static int I2abad_positions2_to_go[18] = {918, 918,  815,  815, 1276, 1276, 1173, 1173, 1785, 1785, 1683, 1683, 2183, 2183, 2075, 2075, 1769, 1769};
+
+//      JAIPUR I1
+       int I1jaipur_current_position = 0;
+       int I1jaipur_current2_position = 0;
+     
+      static int I1jaipur_total_positions = 18;
+      static int I1jaipur_total2_positions = 18;
+
+      static int 
+      I1jaipur_positions_to_go[18] = {2026, 2026, 2128, 2128, 3352, 3352, 3455, 3455, 5138, 5138, 5241, 5241, 5700, 5700, 5803, 5803, 5497, 5497};
+       static int I1jaipur_positions2_to_go[18] = {2026, 2026, 1924, 1924, 3148, 3148, 3045, 3045, 4728, 4728, 4625, 4625, 5084, 5084, 4981,4981, 4675, 4675};
+//      JAIPUR I2a
+      int I2jaipur_current_position = 0;
+      int I2jaipur_current2_position = 0;
+   
+     static int I2jaipur_total_positions = 18;
+     static int I2jaipur_total2_positions = 18;
+
+     
+      static int I2jaipur_positions_to_go[18] =  {1530, 1530, 1633, 1633, 2102, 2102, 2205, 2205, 3429, 3429, 3535, 3535, 3996, 3996, 4102, 4102, 3796, 3796};
+      static int I2jaipur_positions2_to_go[18] = {1530, 1530, 1427, 1427, 1896, 1896, 1793, 1793, 3017, 3017, 2911, 2911, 3372, 3372, 3266, 3266, 2960, 2960};
+
+
+       
+       AccelStepper stepper1(AccelStepper::DRIVER, D2, D1);
+       AccelStepper stepper2(AccelStepper::DRIVER, D3, D4);
+
+ 
+void setup() {
+ 
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(150);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(150);
+  delay(1000);
+  pinMode(LOCK,OUTPUT);
+  pinMode(DOORBELL,OUTPUT);
+  digitalWrite(LOCK,HIGH);
+  digitalWrite(DOORBELL,HIGH);
+  Serial.begin(9600);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Connecting to WiFi..");
+  }
+  Serial.print("Connected to WiFi :"); 
+
+  
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
+  Serial.println(WiFi.SSID());
+  client.setServer(mqttServer, mqttPort);
+
+  while (!client.connected()) {
+    Serial.println("Connecting to MQTT...");
+    if (client.connect("RB3")) {
+      Serial.println("connected");  
+    } else {
+      Serial.print("failed with state ");
+      Serial.println(client.state());  //If you get state 5: mismatch in configuration
+      delay(2000);
+    }
+  }
+  client.publish("RB3/ROBO3", "Hello I am RB3");
+  client.subscribe("RB3/ROBO3");
+}
+
+void MQTTcallback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived in topic: ");
+  Serial.println(topic);
+  Serial.print("Message:");
+  message="";
+  for (int i = 0; i < length; i++) {
+    message = message + (char)payload[i];  //Conver *byte to String
+  }
+  int value = message.toInt();
+  Serial.println(value);
+  Serial.println(message);
+  Serial.println();
+  Serial.println("-----------------------");  
+}
+
+void loop() {
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("LOOP");
+  Serial.println(message);
+  c =0;
+
+  while(message == "RB3XI1MUMBAI")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1mumbai();
+   
+  }
+
+  while(message == "RB3XI2MUMBAI")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2mumbai();
+   
+  }
+
+  while(message == "RB3XI1DELHI")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1delhi();
+   
+  }
+
+  while(message == "RB3XI2DELHI")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2delhi();
+  }
+
+  while(message == "RB3XI1KOLKATA")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1kolkata();
+   
+  }
+
+
+  while(message == "RB3XI2KOLKATA")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2kolkata();
+   
+  }
+
+  while(message == "RB3XI1CHENNAI")
+  { 
+
+    digitalWrite(LOCK,HIGH);
+    I1chennai();
+   
+  }
+
+  while(message == "RB3XI2CHENNAI")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2chennai();
+  }
+  while(message == "RB3XBENGI1"){
+  
+    I1banglore();
+  }
+
+  while(message == "RB3XI2BENG")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2banglore();  
+  }
+  
+  while(message == "RB3XI1HYDER")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1hydrabad();
+   
+  }
+
+  while(message == "RB3XI2HYDER")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2hydrabad();
+   
+  }
+
+ while(message == "RB3XI1PUNE")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1pune();  
+  }
+
+  while(message == "RB3XI2PUNE")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2pune();   
+  }
+ while(message == "RB3XI1ABAD")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1abad();
+   
+  }
+
+   while(message == "RB3XI2ABAD")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2abad();
+   
+  }
+
+  while(message == "RB3XI1JAIPUR")
+  {
+    digitalWrite(LOCK,HIGH);
+    I1jaipur();  
+  }
+
+  while(message == "RB3XI2JAIPUR")
+  {
+    digitalWrite(LOCK,HIGH);
+    I2jaipur();   
+  }
+  
+  while(message == "RB3XSTOP")
+  {
+    digitalWrite(LOCK,LOW);
+    stopit(); 
+  }
+
+  
+  while(message == "RB3XDROPPEDMUMBAII1"){
+    digitalWrite(LOCK,LOW);
+    servo_mumbai1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPMUMBAII1");    
+  }
+
+  while(message == "RB3XDROPPEDMUMBAII2"){
+    digitalWrite(LOCK,LOW);
+    servo_mumbai2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPMUMBAII2");
+  }
+
+  while(message == "RB3XDROPPEDDELHII1"){
+    digitalWrite(LOCK,LOW);
+    servo_delhi1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPDELHII1");
+  }
+
+  while(message == "RB3XDROPPEDDELHII2"){
+    digitalWrite(LOCK,LOW);
+    servo_delhi2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPDELHII2");
+  }
+
+  while(message == "RB3XDROPPEDKOLKATAI1"){
+    digitalWrite(LOCK,LOW);
+    servo_kolkata1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPKOLKATAI1");
+  }
+
+  while(message == "RB3XDROPPEDKOLKATAI2"){
+    digitalWrite(LOCK,LOW);
+    servo_kolkata2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPKOLKATAI2");
+  }
+
+  while(message == "RB3XDROPPEDCHENNAII1"){
+    digitalWrite(LOCK,LOW);
+    servo_chennai1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPCHENNAII1");
+  }
+
+  while(message == "RB3XDROPPEDCHENNAII2"){
+    digitalWrite(LOCK,LOW);
+    servo_chennai2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPCHENNAII2");
+  }
+  
+  while(message == "RB3XDROPPEDBENGI1"){
+    digitalWrite(LOCK,LOW);
+    servo_banglore1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPBENGI1");
+  }
+
+  while(message == "RB3XDROPPEDBENGI2"){
+    digitalWrite(LOCK,LOW);
+    servo_banglore2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPBENGI2");
+  }
+
+  while(message == "RB3XDROPPEDHYDERI1"){
+    digitalWrite(LOCK,LOW);
+    servo_hydrabad1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPHYDERI1");
+  }
+  while(message == "RB3XDROPPEDHYDERI2"){
+    digitalWrite(LOCK,LOW);
+    servo_hydrabad2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPHYDERI2");
+  }
+
+  while(message == "RB3XDROPPEDPUNEI1"){
+    digitalWrite(LOCK,LOW);
+    servo_pune1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPPUNEI1");
+  }
+
+  while(message == "RB3XDROPPEDPUNEI2"){
+    digitalWrite(LOCK,LOW);
+    servo_pune2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPPUNEI2");
+  }
+
+  while(message == "RB3XDROPPEDABADI1"){
+    digitalWrite(LOCK,LOW);
+    servo_abad1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPABADI1");
+  }
+  
+  while(message == "RB3XDROPPEDABADI2"){
+    digitalWrite(LOCK,LOW);
+    servo_abad2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPABADI2");
+  }
+  
+ while(message == "RB3XDROPPEDJAIPURI1"){
+    digitalWrite(LOCK,LOW);
+    servo_jaipur1();
+    client.publish("PYTHON/PUBLISH","RB3XDRPJAIPURI1");
+  }
+
+   while(message == "RB3XDROPPEDJAIPURI2"){
+    digitalWrite(LOCK,LOW);
+    servo_jaipur2();
+    client.publish("PYTHON/PUBLISH","RB3XDRPJAIPURI2");
+  }
+   
+
+while (!client.connected())
+ {
+    Serial.println("Connecting to MQTT...");
+    if (client.connect("LOCK"))
+    {
+      Serial.println("connected");  
+    } else
+    {
+      Serial.print("failed with state ");
+      Serial.println(client.state());  //If you get state 5: mismatch in configuration
+      delay(2000);
+      setup();
+    }
+ }
+}
+void I1abad(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1abad_positions_to_go[I1abad_current_position++]);
+    stepper2.moveTo(I1abad_positions2_to_go[I1abad_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1abad_current_position;
+  arrayind2 = I1abad_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1abad_current_position == I1abad_total_positions && I1abad_current2_position == I1abad_total2_positions)
+  {
+    I1abad_current_position = 0;
+    I1abad_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+
+void I2abad(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2abad_positions_to_go[I2abad_current_position++]);
+    stepper2.moveTo(I2abad_positions2_to_go[I2abad_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2abad_current_position;
+  arrayind2 = I2abad_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2abad_current_position == I2abad_total_positions && I2abad_current2_position == I2abad_total2_positions)
+  {
+    I2abad_current_position = 0;
+    I2abad_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+void I1mumbai(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1mumbai_positions_to_go[I1mumbai_current_position++]);
+    stepper2.moveTo(I1mumbai_positions2_to_go[I1mumbai_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1mumbai_current_position;
+  arrayind2 = I1mumbai_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();  
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1mumbai_current_position == I1mumbai_total_positions && I1mumbai_current2_position == I1mumbai_total2_positions)
+  {
+    I1mumbai_current_position = 0;
+    I1mumbai_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+void I2mumbai(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2mumbai_positions_to_go[I2mumbai_current_position++]);
+    stepper2.moveTo(I2mumbai_positions2_to_go[I2mumbai_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+  arrayind1 = I2mumbai_current_position;
+  arrayind2 = I2mumbai_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2mumbai_current_position == I2mumbai_total_positions && I2mumbai_current2_position == I2mumbai_total2_positions)
+  {
+    I2mumbai_current_position = 0;
+    I2mumbai_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }
+        
+}
+
+void I1delhi(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1delhi_positions_to_go[I1delhi_current_position++]);
+    stepper2.moveTo(I1delhi_positions2_to_go[I1delhi_current2_position++]);
+   client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1delhi_current_position;
+  arrayind2 = I1delhi_current2_position;
+
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1delhi_current_position == I1delhi_total_positions && I1delhi_current2_position == I1delhi_total2_positions)
+  {
+    I1delhi_current_position = 0;
+    I1delhi_current2_position = 0;
+    message="";
+    I1delhi_current_position =0;
+     I1delhi_current2_position = I1delhi_current2_position;
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }
+       
+}
+
+void I2delhi(){
+//  Serial.print("Starting Delhi");
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    Serial.println("Start Delhi");
+    stepper1.moveTo(I2delhi_positions_to_go[I2delhi_current_position++]);
+    stepper2.moveTo(I2delhi_positions2_to_go[I2delhi_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2delhi_current_position;
+  arrayind2 = I2delhi_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2delhi_current_position == I2delhi_total_positions && I2delhi_current2_position == I2delhi_total2_positions)
+  {
+    I2delhi_current_position = 0;
+    I2delhi_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+
+void I1kolkata(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1kolkata_positions_to_go[I1kolkata_current_position++]);
+    stepper2.moveTo(I1kolkata_positions2_to_go[I1kolkata_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1kolkata_current_position;
+  arrayind2 = I1kolkata_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1kolkata_current_position == I1kolkata_total_positions && I1kolkata_current2_position == I1kolkata_total2_positions)
+  {
+    I1kolkata_current_position = 0;
+    I1kolkata_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+void I2kolkata(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2kolkata_positions_to_go[I2kolkata_current_position++]);
+    stepper2.moveTo(I2kolkata_positions2_to_go[I2kolkata_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2kolkata_current_position;
+  arrayind2 = I2kolkata_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2kolkata_current_position == I2kolkata_total_positions && I2kolkata_current2_position == I2kolkata_total2_positions)
+  {
+    I2kolkata_current_position = 0;
+    I2kolkata_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+void I1chennai(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1chennai_positions_to_go[I1chennai_current_position++]);
+    stepper2.moveTo(I1chennai_positions2_to_go[I1chennai_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1chennai_current_position;
+  arrayind2 = I1chennai_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1chennai_current_position == I1chennai_total_positions && I1chennai_current2_position == I1chennai_total2_positions)
+  {
+    I1chennai_current_position = 0;
+    I1chennai_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+
+void I2chennai(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2chennai_positions_to_go[I2chennai_current_position++]);
+    stepper2.moveTo(I2chennai_positions2_to_go[I2chennai_current2_position++]);
+   client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2chennai_current_position;
+  arrayind2 = I2chennai_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2chennai_current_position == I2chennai_total_positions && I2chennai_current2_position == I2chennai_total2_positions)
+  {
+    I2chennai_current_position = 0;
+    I2chennai_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+
+void I1banglore(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1banglore_positions_to_go[I1banglore_current_position++]);
+    stepper2.moveTo(I1banglore_positions2_to_go[I1banglore_current2_position++]);
+   client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1banglore_current_position;
+  arrayind2 = I1banglore_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1banglore_current_position == I1banglore_total_positions && I1banglore_current2_position == I1banglore_total2_positions)
+  {
+    I1banglore_current_position = 0;
+    I1banglore_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+
+void I2banglore(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2banglore_positions_to_go[I2banglore_current_position++]);
+    stepper2.moveTo(I2banglore_positions2_to_go[I2banglore_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2banglore_current_position;
+  arrayind2 = I2banglore_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2banglore_current_position == I2banglore_total_positions && I2banglore_current2_position == I2banglore_total2_positions)
+  {
+    I2banglore_current_position = 0;
+    I2banglore_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+void I1hydrabad(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1hydrabad_positions_to_go[I1hydrabad_current_position++]);
+    stepper2.moveTo(I1hydrabad_positions2_to_go[I1hydrabad_current2_position++]);
+   client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1hydrabad_current_position;
+  arrayind2 = I1hydrabad_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1hydrabad_current_position == I1hydrabad_total_positions && I1hydrabad_current2_position == I1hydrabad_total2_positions)
+  {
+    I1hydrabad_current_position = 0;
+    I1hydrabad_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+void I2hydrabad(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2hydrabad_positions_to_go[I2hydrabad_current_position++]);
+    stepper2.moveTo(I2hydrabad_positions2_to_go[I2hydrabad_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2hydrabad_current_position;
+  arrayind2 = I2hydrabad_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2hydrabad_current_position == I2hydrabad_total_positions && I2hydrabad_current2_position == I2hydrabad_total2_positions)
+  {
+    I2hydrabad_current_position = 0;
+    I2hydrabad_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+ void I1pune(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1pune_positions_to_go[I1pune_current_position++]);
+    stepper2.moveTo(I1pune_positions2_to_go[I1pune_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1pune_current_position;
+  arrayind2 = I1pune_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1pune_current_position == I1pune_total_positions && I1pune_current2_position == I1pune_total2_positions)
+  {
+    I1pune_current_position = 0;
+    I1pune_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }       
+}
+void I2pune(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(400);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(400);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2pune_positions_to_go[I2pune_current_position++]);
+    stepper2.moveTo(I2pune_positions2_to_go[I2pune_current2_position++]);
+   client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I2pune_current_position;
+  arrayind2 = I2pune_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I2pune_current_position == I2pune_total_positions && I2pune_current2_position == I2pune_total2_positions)
+  {
+    I2pune_current_position = 0;
+    I2pune_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);
+  }        
+}
+
+void I1jaipur(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+ 
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I1jaipur_positions_to_go[I1jaipur_current_position++]);
+    stepper2.moveTo(I1jaipur_positions2_to_go[I1jaipur_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+
+
+  arrayind1 = I1jaipur_current_position;
+  arrayind2 = I1jaipur_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+  stepper1.currentPosition();
+  stepper2.currentPosition();
+ 
+  ESP.wdtFeed();
+  if(I1jaipur_current_position == I1jaipur_total_positions && I1jaipur_current2_position == I1jaipur_total2_positions)
+  {
+    I1jaipur_current_position = 0;
+    I1jaipur_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback); 
+  }        
+}
+
+void I2jaipur(){
+ client.loop();
+ client.setCallback(MQTTcallback);
+//Serial.println("to jaipur");
+  stepper1.setMaxSpeed(2000);
+  stepper1.setAcceleration(250);
+ 
+  stepper2.setMaxSpeed(2000);
+  stepper2.setAcceleration(250);
+//  Serial.println("Starting Jaipur....");
+  if( stepper1.distanceToGo()==0 && stepper2 .distanceToGo()==0)
+  {
+    stepper1.moveTo(I2jaipur_positions_to_go[I2jaipur_current_position++]);
+    stepper2.moveTo(I2jaipur_positions2_to_go[I2jaipur_current2_position++]);
+    client.publish("PYTHON/PUBLISH","RB3XFWD");
+  }
+  
+  arrayind1 = I2jaipur_current_position;
+  arrayind2 = I2jaipur_current_position;
+ 
+  stepper1.run();
+  stepper2.run();
+  //stepper1.currentPosition();
+//  stepper1.currentPosition();
+//  stepper2.currentPosition();
+
+  ESP.wdtFeed();
+  if(I2jaipur_current_position == I2jaipur_total_positions && I2jaipur_current2_position == I2jaipur_total2_positions)
+  {
+    I2jaipur_current_position = 0;
+    I2jaipur_current2_position = 0;
+    message="";
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    client.loop();
+    client.setCallback(MQTTcallback);    
+    
+  }
+  
+}
+void stopit(){
+    client.loop();
+    client.setCallback(MQTTcallback);
+    Serial.println("STEP1");
+    Step1 = stepper1.distanceToGo();
+    Serial.println(Step1);
+    Serial.println("STEP2");
+    Step2 = stepper2.distanceToGo();
+    Serial.println(Step2);
+    stepper1.disableOutputs();
+    stepper2.disableOutputs();  
+}
+
+
+void servo_abad1()
+{ 
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7);
+  //myservo.write(90);
+  //delay(400);
+  myservo.write(180);                   // left drop
+  delay(400);
+  for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+  myservo.detach();
+  c++;
+  client.publish("PYTHON/PUBLISH","RB3XDRPABADI1");
+  }
+}
+
+void servo_abad2()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);               // right drop
+  delay(400);
+for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+    c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPABADI2");
+  }
+}
+ 
+ 
+void servo_mumbai1()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                     // left drop
+  delay(400);
+ for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+  myservo.detach();
+  c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPMUMBAII1"); 
+  }
+
+}
+void servo_mumbai2()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                  // left drop
+  delay(400);
+  for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+    myservo.detach();
+    c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPMUMBAII2");
+  }
+}
+
+void servo_delhi1()
+{  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+// myservo.write(90);
+//  delay(400);
+  myservo.write(0);                // right drop
+  delay(400);
+for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+  myservo.detach();
+   c++;  
+     client.publish("PYTHON/PUBLISH","RB3XDRPDELHII1");
+  }
+
+}
+
+void servo_delhi2()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  while(c==0){
+ myservo.attach(D7); 
+// myservo.write(90);
+//  delay(400);
+  myservo.write(180);                 // left drop
+  delay(400);
+  for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+  myservo.detach();
+  c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPDELHII2");
+  }
+
+}
+void servo_kolkata1()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  while(c==0){
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);     // right drop
+  delay(400);
+ for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+    c++; 
+      client.publish("PYTHON/PUBLISH","RB3XDRPKOLKATAI1");
+
+  }
+}
+void servo_kolkata2()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                // left drop 
+  delay(400);
+ for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+    myservo.detach();
+    c++; 
+  client.publish("PYTHON/PUBLISH","RB3XDRPKOLKATAI2");
+  }
+}
+
+void servo_chennai1()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);  
+  myservo.write(0);                // right drop
+  delay(400);
+  for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+     c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPCHENNAII1");
+  }
+}
+
+
+
+void servo_chennai2()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);                   // right drop
+  delay(400);
+  for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+      c++;
+        client.publish("PYTHON/PUBLISH","RB3XDRPCHENNAII2");
+  }
+}
+
+
+
+void servo_banglore1()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);     // left drop
+  delay(400);
+for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+    myservo.detach();  
+  c++;  
+      client.publish("PYTHON/PUBLISH","RB3XDRPBENGI1");
+  }
+}
+
+void servo_banglore2()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);           // right drop
+  delay(400);
+  for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+     c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPBENGI2");
+  }
+}
+
+void servo_hydrabad1()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                  // left drop
+  delay(400);
+ for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+    myservo.detach();
+    c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPHYDERI1");       
+  }
+}
+
+void servo_hydrabad2()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                          //left drop
+  delay(400);
+ for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+    myservo.detach();
+    c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPHYDERI2"); 
+  }
+}
+
+void servo_pune1()
+{
+  
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);                   // right drop
+  delay(400);
+ for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+    myservo.detach();
+    c++;
+      client.publish("PYTHON/PUBLISH","RB3XDRPPUNEI1");     
+  }
+}
+
+void servo_pune2()
+{ 
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);                      // right drop
+  delay(400);
+  for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+  myservo.detach();
+  c++;
+  client.publish("PYTHON/PUBLISH","RB3XDRPPUNEI2");
+  }
+}
+void servo_jaipur1()
+{ 
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+  
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(180);                    // left drop
+  delay(400);
+ for(pos = 180; pos >= 90; pos -= 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }    
+  myservo.detach();
+   c++;
+  client.publish("PYTHON/PUBLISH","RB3XDRPJAIPURI1"); 
+  }
+}
+
+void servo_jaipur2()
+{
+  client.loop();
+  client.setCallback(MQTTcallback);
+  Serial.println("STEP1");
+  Step1 = stepper1.distanceToGo();
+  Serial.println(Step1);
+  Serial.println("STEP2");
+  Step2 = stepper2.distanceToGo();
+  Serial.println(Step2);
+  stepper1.disableOutputs();
+  stepper2.disableOutputs();
+ 
+  while(c==0)
+  {
+  myservo.attach(D7); 
+//  myservo.write(90);
+//  delay(400);
+  myservo.write(0);                // right drop
+  delay(400);
+  for(pos = 0; pos <= 90; pos += 5) // goes from 0 degrees to 180 degrees 
+  {                                  // in steps of 1 degree 
+    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+    delay(10);                       // waits 15ms for the servo to reach the position 
+  }  
+  myservo.detach();
+  c++;
+  client.publish("PYTHON/PUBLISH  ","RB3XDRPJAIPURI2");   
+  }
+}
