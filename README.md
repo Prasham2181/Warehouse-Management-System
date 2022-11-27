@@ -18,3 +18,6 @@ This Projects Follows parcel detail list from Sample Data .xlcx
 2nd is of live image processing with amvs running and delivering parcels 
 3rd is of the ip console 
 
+Link for videos:
+
+https://drive.google.com/drive/folders/1HtN5aBVulpu0IYul6yOj7Jgc8ne2E709?usp=sharing
